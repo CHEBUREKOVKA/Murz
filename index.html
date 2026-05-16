@@ -69,7 +69,7 @@
 </head>
 <body class="theme-light gamma-yellow">
 
-    <!-- АВТОРИЗАЦИЯ -->
+    <!-- ЭКРАН ВХОДА И РЕГИСТРАЦИИ -->
     <div id="screen-auth" class="screen active">
         <div class="auth-box">
             <h1>Мурз.банк</h1>
@@ -190,18 +190,17 @@
             async server(method = 'GET') {
                 const link = `https://jsonbin.io{CONFIG_BIN_ID}` + (method === 'GET' ? '/latest' : '');
                 
+                // Используем правильный заголовок для авторизации jsonbin без лишних CORS триггеров
                 const config = { 
                     method: method,
                     headers: { 
-                        "X-Master-Key": CONFIG_KEY_ID,
-                        "Content-Type": "application/json"
+                        "X-Master-Key": CONFIG_KEY_ID
                     } 
                 };
                 
                 if (method === 'PUT') {
+                    config.headers["Content-Type"] = "application/json";
                     config.body = JSON.stringify(this.cache);
-                } else {
-                    delete config.body;
                 }
                 
                 try {
