@@ -1,5 +1,6 @@
-[[redirects]]
-  from = "/api/*"
-  to = "https://jsonbin.io"
-  status = 200
-  force = true
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "X-Master-Key, Content-Type"
