@@ -191,19 +191,28 @@
                 document.getElementById('popup-box').style.display = 'flex';
             }
 
-            async server(method = 'GET') {
-                const link = `https://jsonbin.io{CONFIG_BIN_ID}`;
-                // Для GET запроса Content-Type слать НЕ НАДО, чтобы браузер не ругался на CORS
-                const headers = { "X-Master-Key": CONFIG_KEY_ID };
-                const config = { headers: headers };
+                        async server(method = 'GET') {
+                // Используем стабильный публичный CORS-прокси для обхода блокировок браузера
+                const proxy = "https://corsproxy.io?";
+                const targetLink = `https://jsonbin.io{CONFIG_BIN_ID}`;
+                const link = proxy + encodeURIComponent(method === 'GET' ? `${targetLink}/latest` : targetLink);
+                
+                const config = { 
+                    method: method,
+                    headers: { 
+                        "X-Master-Key": CONFIG_KEY_ID,
+                        "Content-Type": "application/json"
+                    } 
+                };
                 
                 if (method === 'PUT') {
-                    headers["Content-Type"] = "application/json";
-                    config.method = 'PUT';
                     config.body = JSON.stringify(this.cache);
+                } else {
+                    delete config.body;
                 }
+                
                 try {
-                    let req = await fetch(method === 'GET' ? `${link}/latest` : link, config);
+                    let req = await fetch(link, config);
                     let res = await req.json();
                     if(method === 'GET') {
                         this.cache = res.record;
@@ -215,6 +224,7 @@
                     this.uiAlert("Ошибка связи с сервером jsonbin.io.");
                 }
             }
+}
 
 
             async initSession() {
