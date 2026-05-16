@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мурз.банк</title>
+    <style>
+        :root {
+            --bg-color: #f4f5f7;
+            --panel-color: #ffffff;
+            --text-color: #000000;
+            --text-secondary: #555555;
+            --primary-color: #ffcc00; /* Изначально желтая */
+            --danger-color: #ff3333;
+            --border-accent: transparent;
+        }
+
+        /* Темы оформления */
+        body.theme-light { --bg-color: #f4f5f7; --panel-color: #ffffff; --text-color: #000000; --text-secondary: #666666; }
+        body.theme-dark { --bg-color: #121212; --panel-color: #1e1e1e; --text-color: #ffffff; --text-secondary: #aaaaaa; }
+        
+        /* Цветовые гаммы */
+        body.gamma-green { --primary-color: #1bb342; } /* Стиль Сбербанка */
+        body.gamma-red { --primary-color: #ff3b30; }
+        body.gamma-grey { --primary-color: #8e8e93; }
+        body.gamma-black { --primary-color: #000000; }
+        body.gamma-white { --primary-color: #e5e5ea; }
+        body.gamma-yellow { --primary-color: #ffcc00; }
+        
+        /* Эксклюзивные гаммы админа */
+        body.gamma-cyborg { --bg-color: #1c1c1e; --panel-color: #2c2c2e; --text-color: #ffffff; --primary-color: #8e8e93; --border-accent: #ff3333; }
+        body.gamma-murz { --primary-color: #ff9900; background-image: radial-gradient(#ffe6cc 8%, transparent 9%); background-size: 20px 20px; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); transition: 0.2s; padding-bottom: 70px; }
+        
+        .screen { display: none; padding: 16px; min-height: 100vh; flex-direction: column; }
+        .screen.active { display: flex; }
+
+        .auth-box { max-width: 400px; margin: auto; width: 100%; padding: 24px; background: var(--panel-color); border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); text-align: center; }
+        .auth-box h1 { color: #1bb342; font-size: 28px; margin-bottom: 20px; }
+        
+        input, select { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 12px; background: var(--panel-color); color: var(--text-color); font-size: 16px; outline: none; }
+        button { width: 100%; padding: 14px; background: var(--primary-color); border: none; color: #fff; font-weight: bold; border-radius: 12px; font-size: 16px; cursor: pointer; }
+        button:active { opacity: 0.8; }
+        
+        /* Кастомное окно интерфейса вместо alert */
+        .my-alert { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+        .my-alert-content { background: var(--panel-color); padding: 20px; border-radius: 16px; width: 100%; max-width: 320px; text-align: center; }
+        .my-alert-content p { margin-bottom: 16px; font-weight: 500; }
+
+        /* Дизайн Сбербанка */
+        .sber-header { background: var(--panel-color); padding: 16px; border-radius: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .avatar-wrap { width: 60px; height: 60px; position: relative; cursor: pointer; }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--border-accent); background: #eee; }
+        .gun-icon { display: none; position: absolute; bottom: -4px; right: -4px; font-size: 16px; background: #fff; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px; border: 1px solid #000; }
+        
+        .sber-card { background: linear-gradient(135deg, var(--primary-color), #0f852e); color: white; padding: 24px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+        .sber-card.minus-active { background: var(--danger-color) !important; color: white !important; }
+        .card-label { font-size: 13px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .card-money { font-size: 30px; font-weight: bold; margin-top: 6px; }
+
+        .block-title { font-size: 18px; font-weight: bold; margin: 12px 0; }
+        .ui-card { background: var(--panel-color); padding: 16px; border-radius: 20px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        
+        /* Навигация */
+        .bottom-menu { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: var(--panel-color); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #eee; z-index: 999; }
+        .menu-btn { flex: 1; text-align: center; font-size: 11px; color: var(--text-secondary); cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+        .menu-btn.active { color: var(--primary-color); font-weight: bold; }
+        .menu-btn span { font-size: 20px; }
+
+        .hist-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .tg-link { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: auto; padding: 15px 0; font-weight: bold; }
+    </style>
+</head>
+<body class="theme-light gamma-yellow">
+
+    <!-- АВТОРИЗАЦИЯ -->
+    <div id="screen-auth" class="screen active">
+        <div class="auth-box">
+            <h1>Мурз.банк</h1>
+            <input type="text" id="input-login" placeholder="Введите ваш никнейм">
+            <input type="password" id="input-password" placeholder="Введите пароль">
+            <button onclick="bank.processAuth()">Войти / Создать аккаунт</button>
+            <div class="tg-link">по вопросам тг @crutoicheliky</div>
+        </div>
+    </div>
+
+    <!-- ГЛАВНАЯ СТРАНИЦА -->
+    <div id="screen-main" class="screen">
+        <div class="sber-header">
+            <div class="avatar-wrap" onclick="document.getElementById('file-avatar').click()">
+                <img id="view-avatar" class="avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 24 24' fill='%23ccc'><circle cx='12' cy='12' r='12'/></svg>">
+                <div id="view-gun" class="gun-icon">🔫</div>
+            </div>
+            <input type="file" id="file-avatar" style="display:none" accept="image/*" onchange="bank.handleAvatarLoad(this)">
+            <div>
+                <div id="view-username" style="font-weight: bold; font-size: 18px;">Никнейм</div>
+                <div id="view-privilege" style="font-size: 12px; color: var(--text-secondary);">Статус</div>
+            </div>
+        </div>
+
+        <div id="block-balance" class="sber-card">
+            <div class="card-label">Баланс счета</div>
+            <div id="view-balance" class="card-money">0 мурзов</div>
+        </div>
+
+        <div class="ui-card">
+            <div class="block-title" style="margin-top:0;">Перевести мурзы</div>
+            <input type="text" id="send-to" placeholder="Ник того, кому переводим">
+            <input type="number" id="send-val" placeholder="Сколько мурзов">
+            <button onclick="bank.executeTransfer()">Отправить перевод</button>
+        </div>
+        <div class="tg-link">по вопросам тг @crutoicheliky</div>
+    </div>
+
+    <!-- ИСТОРИЯ ОПЕРАЦИЙ -->
+    <div id="screen-history" class="screen">
+        <div class="block-title" style="font-size:22px;">История переводов</div>
+        <p style="font-size:12px; color:var(--text-secondary); margin-bottom:12px;">Отображаются операции за последние 3 дня</p>
+        <div id="list-history" class="ui-card" style="flex:1; overflow-y:auto;"></div>
+        <div class="tg-link">по вопросам тг @crutoicheliky</div>
+    </div>
+
+    <!-- НАСТРОЙКИ СИСТЕМЫ -->
+    <div id="screen-settings" class="screen">
+        <div class="block-title" style="font-size:22px;">Настройки приложения</div><br>
+        <div class="ui-card">
+            <label>Выбрать тему</label>
+            <select id="sel-theme" onchange="bank.saveUiSettings()">
+                <option value="theme-light">Светлая тема</option>
+                <option value="theme-dark">Тёмная тема</option>
+            </select>
+            
+            <label>Цветовая схема</label>
+            <select id="sel-gamma" onchange="bank.saveUiSettings()">
+                <option value="gamma-yellow">Жёлтая (По умолчанию)</option>
+                <option value="gamma-green">Зелёная</option>
+                <option value="gamma-red">Красная</option>
+                <option value="gamma-grey">Серая</option>
+                <option value="gamma-black">Чёрная</option>
+                <option value="gamma-white">Белая</option>
+                <option value="gamma-cyborg" id="opt-cyborg" style="display:none;">Киборг гамма</option>
+                <option value="gamma-murz" id="opt-murz" style="display:none;">Тема Мурзяу 🐾</option>
+            </select>
+
+            <label>Личная копилка (Лимит себе)</label>
+            <input type="number" id="user-self-limit" placeholder="Максимум для себя" oninput="localStorage.setItem('self_lim', this.value)">
+        </div>
+        <button style="background:var(--danger-color)" onclick="bank.exitAccount()">Выйти из профиля</button>
+        <div class="tg-link">по вопросам тг @crutoicheliky</div>
+    </div>
+
+    <!-- АДМИН-ПАНЕЛЬ -->
+    <div id="screen-admin" class="screen">
+        <div class="block-title" style="font-size:22px;">Панель управления</div>
+        <div id="list-admin-users" style="flex:1; overflow-y:auto; margin-top:12px;"></div>
+        <div class="tg-link">по вопросам тг @crutoicheliky</div>
+    </div>
+
+    <!-- НИЖНЕЕ МЕНЮ -->
+    <div id="app-nav" class="bottom-menu" style="display:none;">
+        <div class="menu-btn active" onclick="bank.tab('screen-main', this)"><span>🏠</span>Главная</div>
+        <div class="menu-btn" onclick="bank.tab('screen-history', this)"><span>🕒</span>История</div>
+        <div class="menu-btn" onclick="bank.tab('screen-settings', this)"><span>⚙️</span>Настройки</div>
+        <div class="menu-btn" id="btn-nav-admin" style="display:none;" onclick="bank.tab('screen-admin', this)"><span>👑</span>Админ</div>
+    </div>
+
+    <!-- ИНТЕРФЕЙСНЫЕ МУЛЬТИ-ОКНА -->
+    <div id="popup-box" class="my-alert">
+        <div class="my-alert-content">
+            <p id="popup-message">Сообщение</p>
+            <button style="padding:10px;" onclick="document.getElementById('popup-box').style.display='none'">Понятно</button>
+        </div>
+    </div>
+
+    <script>
+        // НАСТРОЙКА СВЯЗИ С БАЗОЙ ДАННЫХ JSONBIN
+        const CONFIG_BIN_ID = "6a08262dadc21f119aaa852c";
+        const CONFIG_KEY_ID = "$2a$10$Yony43OsPcWcbZ0CUZlDhOeu5vh1blyMvcslCGsAyKVet9XlNEDRi";
+
+        class BankEngine {
+            constructor() {
+                this.cache = { admin_config: { login:"", password:"" }, users: {}, transactions: [] };
+                this.user = null;
+                this.rootMode = false;
+            }
+
+            uiAlert(msg) {
+                document.getElementById('popup-message').innerText = msg;
+                document.getElementById('popup-box').style.display = 'flex';
+            }
+
+            async server(method = 'GET') {
+                const link = `https://jsonbin.io{CONFIG_BIN_ID}`;
+                const config = { headers: { "X-Master-Key": CONFIG_KEY_ID, "Content-Type": "application/json" } };
+                if (method === 'PUT') {
+                    config.method = 'PUT';
+                    config.body = JSON.stringify(this.cache);
+                }
+                try {
+                    let req = await fetch(method === 'GET' ? `${link}/latest` : link, config);
+                    let res = await req.json();
+                    if(method === 'GET') {
+                        this.cache = res.record;
+                        if (!this.cache.admin_config) {
+                            this.cache.admin_config = { login: "admin", password: "123" };
+                        }
+                    }
+                } catch(e) {
+                    this.uiAlert("Ошибка связи с сервером jsonbin.io.");
+                }
+            }
+
+            async initSession() {
+                const savedUser = localStorage.getItem('mb_session_user');
+                const isRoot = localStorage.getItem('mb_session_root');
+                
+                if (savedUser || isRoot === "true") {
+                    await this.server('GET');
+                    if (isRoot === "true") {
+                        this.rootMode = true;
+                        this.user = { name: "Администратор", role: "root" };
+                        document.getElementById('btn-nav-admin').style.display = 'flex';
+                    } else if (this.cache.users[savedUser]) {
+                        if (this.cache.users[savedUser].banned) {
+                            localStorage.clear();
+                            return;
+                        }
+                        this.user = this.cache.users[savedUser];
+                    }
+                    this.openApp();
+                }
+            }
+
+            async processAuth() {
+                const log = document.getElementById('input-login').value.trim();
+                const pas = document.getElementById('input-password').value.trim();
+                if(!log || !pas) return this.uiAlert("Заполните логин и пароль!");
+
+                await this.server('GET');
+
+                if(this.cache.admin_config && log === this.cache.admin_config.login && pas === this.cache.admin_config.password) {
+                    this.rootMode = true;
+                    this.user = { name: "Администратор", role: "root" };
+                    document.getElementById('btn-nav-admin').style.display = 'flex';
+                    localStorage.setItem('mb_session_root', 'true');
+                    this.openApp();
+                    return;
+                }
+
+                if(this.cache.users[log]) {
+                    if(this.cache.users[log].banned) return this.uiAlert("Ваш аккаунт заблокирован!");
+                    if(this.cache.users[log].password !== pas) return this.uiAlert("Неверный пароль!");
+                    this.user = this.cache.users[log];
+                } else {
+                    this.cache.users[log] = { name: log, password: pas, balance: 0, role: 'user', maxLimit: null, avatar: '', banned: false };
+                    this.user = this.cache.users[log];
+                    await this.server('PUT');
+                }
+
+                localStorage.setItem('mb_session_user', log);
+                this.openApp();
+            }
+
+            openApp() {
+                document.getElementById('app-nav').style.display = 'flex';
+                this.updateMainUi();
+                this.switchScreen('screen-main');
+            }
+
+            exitAccount() {
+                this.user = null;
+                this.rootMode = false;
+                localStorage.clear();
+                document.getElementById('app-nav').style.display = 'none';
+                document.getElementById('btn-nav-admin').style.display = 'none';
+                this.switchScreen('screen-auth');
+            }
+
+            getCurrentLimit() {
+                if(this.rootMode) return Infinity;
+                if(this.user.maxLimit !== null && this.user.maxLimit !== undefined) return this.user.maxLimit;
+                const base = { user: 1000, good: 1250, pro: 1500, cyborg: 3500, murz: 10000 };
+                return base[this.user.role] || 1000;
+            }
+
+            updateMainUi() {
+                if(this.rootMode) {
+                    document.getElementById('view-username').innerText = "Администратор";
+                    document.getElementById('view-balance').innerText = "Безлимит Мурзов";
+                    document.getElementById('view-privilege').innerText = "Права: Создатель";
+                    return;
+                }
+
+                const u = this.user;
+                document.getElementById('view-username').innerText = u.name;
+                
+                const txtMoney = this.declension(u.balance, ['мурз', 'мурза', 'мурзов']);
+                document.getElementById('view-balance').innerText = `${u.balance} ${txtMoney}`;
+
+                const card = document.getElementById('block-balance');
+                if(u.balance < 0) card.classList.add('minus-active');
+                else card.classList.remove('minus-active');
+
+                const labelRoles = { user: 'Обычная', good: 'Хороший', pro: 'Про', cyborg: 'Киборг', murz: 'Мурз' };
+                document.getElementById('view-privilege').innerText = `Привилегия: ${labelRoles[u.role] || 'Обычная'}`;
+
+                const img = document.getElementById('view-avatar');
+                img.src = u.avatar || "data:image/svg+xml;utf8,<svg xmlns='http://w3.org' viewBox='0 0 24 24' fill='%23ccc'><circle cx='12' cy='12' r='12'/></svg>";
+                img.style.borderColor = 'transparent';
+                
+                document.getElementById('view-gun').style.display = 'none';
+                document.getElementById('opt-cyborg').style.display = 'none';
+                document.getElementById('opt-murz').style.display = 'none';
+
+                if(u.role === 'good') img.style.borderColor = '#1bb342';
+                if(u.role === 'pro') img.style.borderColor = '#007aff';
+                if(u.role === 'cyborg') {
+                    img.style.borderColor = '#8e8e93';
+                    document.getElementById('view-gun').style.display = 'block';
+                    document.getElementById('opt-cyborg').style.display = 'block';
+                }
+                if(u.role === 'murz') {
+                    img.style.borderColor = '#ffcc00';
+                    document.getElementById('opt-murz').style.display = 'block';
+                }
+
+                this.buildHistoryList();
+            }
+
+            handleAvatarLoad(input) {
+                if(!input.files || !input.files[0]) return;
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    if(!this.rootMode) {
+                        this.user.avatar = reader.result;
+                        this.cache.users[this.user.name].avatar = reader.result;
+                        await this.server('PUT');
+                        this.updateMainUi();
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+
+            async executeTransfer() {
+                const target = document.getElementById('send-to').value.trim();
+                const sum = parseInt(document.getElementById('send-val').value);
+
+                await this.server('GET');
+
+                if(!this.cache.users[target]) return this.uiAlert("Такого получателя не существует!");
+                if(isNaN(sum) || sum <= 0) return this.uiAlert("Нельзя переводить минусовые суммы или ноль!");
+                if(sum < 1) return this.uiAlert("Минимальный перевод — 1 мурз!");
+                
+                const lim = this.getCurrentLimit();
+                if(sum > lim) return this.uiAlert(`Превышен лимит! Ваш максимум: ${lim} мурзов`);
+
+                if(!this.rootMode && this.user.balance < sum) return this.uiAlert("Недостаточно мурзов на балансе!");
+
+                if(!this.rootMode) this.cache.users[this.user.name].balance -= sum;
+                this.cache.users[target].balance += sum;
+
+                this.cache.transactions.push({
+                    from: this.rootMode ? 'Админ' : this.user.name,
+                    to: target,
+                    count: sum,
+                    date: Date.now()
+                });
+
+                await this.server('PUT');
+                if(!this.rootMode) this.user = this.cache.users[this.user.name];
+                
+                this.updateMainUi();
+                this.uiAlert("Перевод успешно отправлен!");
+            }
+
+            buildHistoryList() {
+                const box = document.getElementById('list-history');
+                box.innerHTML = '';
+                const limitTime = Date.now() - (3 * 24 * 60 * 60 * 1000);
+                
+                const items = this.cache.transactions.filter(t => t.date >= limitTime && (t.from === this.user.name || t.to === this.user.name));
+                
+                if(items.length === 0) {
+                    box.innerHTML = '<p style="color:gray; text-align:center; padding:10px;">Нет переводов за 3 дня</p>';
+                    return;
+                }
+
+                items.reverse().forEach(t => {
+                    const isMinus = t.from === this.user.name;
+                    const div = document.createElement('div');
+                    div.className = 'hist-row';
+                    div.innerHTML = `
+                        <div>
+                            <strong>${isMinus ? 'Перевод пользователю ' + t.to : 'Получено от ' + t.from}</strong>
+                            <div style="font-size:10px; color:gray">${new Date(t.date).toLocaleDateString()}</div>
+                        </div>
+                        <span style="color:${isMinus ? 'red' : 'green'}; font-weight:bold;">${isMinus ? '-' : '+'}${t.count}</span>
+                    `;
+                    box.appendChild(div);
+                });
+            }
+
+            buildAdminList() {
+                const box = document.getElementById('list-admin-users');
+                box.innerHTML = '';
+                
+                Object.keys(this.cache.users).forEach(k => {
+                    const u = this.cache.users[k];
+                    const card = document.createElement('div');
+                    card.className = 'ui-card';
+                    card.innerHTML = `
+                        <div style="font-size:14px; margin-bottom:8px; line-height: 1.4;">
+                            👤 <strong>Логин:</strong> ${u.name} <br> 
+                            🔑 <strong>Пароль для восстановления:</strong> <span style="color:blue; font-weight:bold;">${u.password}</span><br>
+                            💰 <strong>Баланс:</strong> ${u.balance} | 🏆 <strong>Привилегия:</strong> ${u.role}
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                            <button style="padding:6px; font-size:12px;" onclick="bank.admBal('${u.name}')">Счет</button>
+                            <button style="padding:6px; font-size:12px;" onclick="bank.admRole('${u.name}')">Статус</button>
+                            <button style="padding:6px; font-size:12px;" onclick="bank.admLim('${u.name}')">Лимит</button>
+                            <button style="padding:6px; font-size:12px; background:${u.banned ? 'green' : 'orange'}" onclick="bank.admBan('${u.name}')">${u.banned ? 'Разбанить' : 'Забанить'}</button>
+                            <button style="padding:6px; font-size:12px; background:red; grid-column: span 2;" onclick="bank.admDel('${u.name}')">УДАЛИТЬ НАВСЕГДА</button>
+                        </div>
+                    `;
+                    box.appendChild(card);
+                });
+            }
+
+            async admBal(name) {
+                let v = prompt("Введите баланс:", this.cache.users[name].balance);
+                if(v === null) return;
+                this.cache.users[name].balance = parseInt(v) || 0;
+                await this.server('PUT'); this.buildAdminList();
+            }
+
+            async admRole(name) {
+                let r = prompt("Роли: user, good, pro, cyborg, murz", this.cache.users[name].role);
+                if(!r) return;
+                this.cache.users[name].role = r;
+                await this.server('PUT'); this.buildAdminList();
+            }
+
+            async admLim(name) {
+                let l = prompt("Введите лимит цифрой:", this.cache.users[name].maxLimit || '');
+                if(l === null) return;
+                this.cache.users[name].maxLimit = l ? parseInt(l) : null;
+                await this.server('PUT'); this.buildAdminList();
+            }
+
+            async admBan(name) {
+                this.cache.users[name].banned = !this.cache.users[name].banned;
+                await this.server('PUT'); this.buildAdminList();
+            }
+
+            async admDel(name) {
+                if(confirm(`Стереть аккаунт ${name}?`)) {
+                    delete this.cache.users[name];
+                    await this.server('PUT'); this.buildAdminList();
+                }
+            }
+
+            saveUiSettings() {
+                const th = document.getElementById('sel-theme').value;
+                const gm = document.getElementById('sel-gamma').value;
+                document.body.className = '';
+                document.body.classList.add(th, gm);
+            }
+
+            tab(screenId, btn) {
+                this.switchScreen(screenId);
+                document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if(screenId === 'screen-admin') this.buildAdminList();
+                if(screenId === 'screen-main') this.updateMainUi();
+            }
+
+            switchScreen(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            }
+
+            declension(n, titles) {
+                return titles[(n % 10 === 1 && n % 100 !== 11) ? 0 : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 1 : 2];
+            }
+        }
+
+        const bank = new BankEngine();
+        window.onload = () => bank.initSession();
+    </script>
+</body>
+</html>
