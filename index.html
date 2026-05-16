@@ -193,8 +193,12 @@
 
             async server(method = 'GET') {
                 const link = `https://jsonbin.io{CONFIG_BIN_ID}`;
-                const config = { headers: { "X-Master-Key": CONFIG_KEY_ID, "Content-Type": "application/json" } };
+                // Для GET запроса Content-Type слать НЕ НАДО, чтобы браузер не ругался на CORS
+                const headers = { "X-Master-Key": CONFIG_KEY_ID };
+                const config = { headers: headers };
+                
                 if (method === 'PUT') {
+                    headers["Content-Type"] = "application/json";
                     config.method = 'PUT';
                     config.body = JSON.stringify(this.cache);
                 }
@@ -211,6 +215,7 @@
                     this.uiAlert("Ошибка связи с сервером jsonbin.io.");
                 }
             }
+
 
             async initSession() {
                 const savedUser = localStorage.getItem('mb_session_user');
